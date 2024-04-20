@@ -6,6 +6,7 @@ from core.data.tasks.list_operation_task import ListOperationTask
 from core.data.tasks.token_operation_task import TokenOprationTask
 from core.data.tasks.mapping_task import MappingTask
 from core.data.tasks.translation_task import TranslationTask
+from core.data.tasks.copy_task import CopyTask
 from core.data.tasks.task import Task
 
 from transformers import PreTrainedTokenizer
@@ -17,6 +18,7 @@ TASK_TYPE_TO_CLASS = {
     "mapping": MappingTask,
     "translation": TranslationTask,
     # "sentiment": SentimentTask,
+    "copy" : CopyTask
 }
 
 
@@ -137,6 +139,10 @@ ALL_TASKS = {
     #     "task_type": "sentiment",
     #     "task_kwargs": {"allow_prefix": True},
     # },
+    "copying":{
+        "task_type": "copy",
+        "task_kwargs": {"birustiness": 2, "classes" : list(string.ascii_lowercase), "num_labels": 10, "epsilon": 0.1},  
+    }
 }
 
 

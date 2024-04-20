@@ -43,6 +43,7 @@ class Task(ABC):
         test_output = self.calc_test_output(test_input)
 
         train_inputs = self.sample_inputs(num_examples, exclude=[test_input])
+        
         train_outputs = [self.calc_output(x) for x in train_inputs]
 
         train_inputs = [str(x) for x in train_inputs]

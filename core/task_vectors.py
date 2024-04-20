@@ -16,9 +16,12 @@ from core.models.utils.inference import (
     modified_forward,
     tokenize_datasets,
     traced_forward,
+    get_attention,
 )
 from core.models.utils.llm_layers import get_layers
 from core.utils.nested import nested_apply
+
+from bertviz import model_view
 
 
 def run_icl(
@@ -31,9 +34,12 @@ def run_icl(
     format_dataset_kwargs = {"include_train": include_train}
     inputs = tokenize_datasets(tokenizer, test_datasets, format_dataset_kwargs=format_dataset_kwargs)
     new_ids = batch_generate(model, tokenizer, inputs=inputs, generate_kwargs={"max_new_tokens": 1})
+    attentions, generated_ids = get_attention(model, tokenizer, inputs=inputs, generate_kwargs={"max_new_tokens": 1})
     predictions = decode_predictions(new_ids, tokenizer)
-
-    return predictions
+    generated_tokens = decode_predictions(generated_ids, tokenizer)
+    # print(new_ids.shape)
+    attention_html = model_view(attentions, generated_tokens, html_action='return')
+    return predictions, attention_html
 
 
 def run_task_vector(

@@ -145,6 +145,9 @@ def batch_generate(
     generate_kwargs = _get_forward_kwargs(generate_kwargs)
     batches = _get_batches(inputs, batch_size, show_progress=show_progress)
     input_type = get_input_type(inputs)
+    # print("input_type", input_type)
+    # print("inputs[input_type]", inputs[input_type].shape)
+    # print("model", model)
 
     device = model.device
 
@@ -162,13 +165,38 @@ def batch_generate(
         generate_ids.append(batch_ids)
 
     generate_ids = torch.cat(generate_ids, dim=0)
-
     new_ids = generate_ids[:, inputs[input_type].shape[1] :]
 
     # outs = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
     # completions = [out[len(prompt) :] for out, prompt in zip(outs, prompts)]
 
     return new_ids
+
+def get_attention(model : PreTrainedModel, tokenizer: PreTrainedTokenizer, inputs: Dict, generate_kwargs: Optional[Dict] = None, batch_size: Optional[int] = None):
+    input_type = get_input_type(inputs)
+    batch_size = 1
+    generate_kwargs = _get_forward_kwargs(generate_kwargs)
+    batches = _get_batches(inputs, batch_size, show_progress=False)
+    device = model.device
+    batch_idx = 0
+    batch_inputs = next(batches)
+    print(batch_inputs[input_type].shape)
+    batch_inputs = nested_apply(batch_inputs, lambda t: t.to(device))
+    with torch.no_grad():
+        batch_ids = model.generate(
+            **batch_inputs,
+            **generate_kwargs,
+            do_sample=False,
+            num_return_sequences=1,
+            pad_token_id=tokenizer.pad_token_id,
+        )
+        out = model(**batch_inputs)
+        attention = out.attentions
+    # print(attention[0].shape)
+    # print(batch_ids.shape)
+    
+    return attention, batch_ids[0][1:]
+        
 
 
 def decode_predictions(

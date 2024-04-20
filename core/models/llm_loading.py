@@ -12,6 +12,7 @@ from core.models.utils.llm_layers import get_layers, get_layers_path
 BASE_KWARGS = {
     "torch_dtype": torch.float16,
     "trust_remote_code": True,
+    "output_attentions": True,
 }
 
 GPU_KWARGS = {

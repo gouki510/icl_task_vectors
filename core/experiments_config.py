@@ -22,6 +22,7 @@ TASKS_TO_EVALUATE = [
     "algorithmic_list_last",
     "algorithmic_to_upper",
     "algorithmic_to_lower",
+    "copying",
 ]
 
 MODELS_TO_EVALUATE = [

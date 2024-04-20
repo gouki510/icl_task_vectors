@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 
 import sys
+# add parent directory to path
+sys.path.append("..")
+sys.path.append(".")
 import os
 import pickle
 import time
@@ -22,6 +25,9 @@ from core.task_vectors import run_icl, run_task_vector
 from core.utils.misc import limit_gpus, seed_everything
 from core.experiments_config import MODELS_TO_EVALUATE, TASKS_TO_EVALUATE
 
+from bertviz import model_view
+import wandb
+
 
 def get_results_file_path(model_type: str, model_variant: str, experiment_id: str = "") -> str:
     return os.path.join(main_experiment_results_dir(experiment_id), f"{model_type}_{model_variant}.pkl")
@@ -32,10 +38,10 @@ def evaluate_task(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, task_n
     accuracies = {}
 
     task = get_task_by_name(tokenizer=tokenizer, task_name=task_name)
-
+    
     # Evaluate baseline
     baseline_datasets = task.create_datasets(num_datasets=100, num_examples=0)
-    predictions = run_icl(model, tokenizer, task, baseline_datasets, include_train=False)
+    predictions,_ = run_icl(model, tokenizer, task, baseline_datasets, include_train=False)
     accuracies["baseline"] = calculate_accuracy_on_datasets(task, predictions, baseline_datasets)
 
     # Evaluate ICL and Task Vector
@@ -43,8 +49,20 @@ def evaluate_task(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, task_n
     # num_test_datasets, num_dev_datasets = 400, 100
     num_test_datasets, num_dev_datasets = 50, 50
     test_datasets = task.create_datasets(num_datasets=num_test_datasets, num_examples=num_examples)
+    print("-"*10, "test_datasets", "-"*10)
+    print("test_datasets size", len(test_datasets))
+    print(test_datasets[0].train_inputs)
+    print(test_datasets[0].train_outputs)
+    print(test_datasets[0].test_input)
+    print(test_datasets[0].test_output)
+    print("-"*10, "test_datasets", "-"*10)
     dev_datasets = task.create_datasets(num_datasets=num_dev_datasets, num_examples=num_examples)
-    icl_predictions = run_icl(model, tokenizer, task, test_datasets)
+    icl_predictions, attention_html = run_icl(model, tokenizer, task, test_datasets)
+    # model view
+    # html = attention_html.data
+    # with open(f'{task_name}-attention_html.html', 'w') as f:
+    #     f.write(html)
+
     tv_predictions, tv_dev_accuracy_by_layer, task_hiddens = run_task_vector(
         model,
         tokenizer,
@@ -96,7 +114,8 @@ def run_main_experiment(
     tasks = get_all_tasks(tokenizer=tokenizer)
 
     num_examples = 5
-
+    wandb.init(project="task-vector", config={"num_examples": num_examples})
+    wandb.define_metric("custom_step")
     for i, task_name in enumerate(TASKS_TO_EVALUATE):
         task = tasks[task_name]
         if task_name in results:
@@ -114,8 +133,14 @@ def run_main_experiment(
         print(f"ICL Accuracy: {accuracies['icl']:.2f}")
         print(f"Task Vector Accuracy: {accuracies['tv']:.2f}")
         print(f"Dev Accuracy by layer: ", end="")
+        wandb.log({f"baseline_accuracy/{task_name}": accuracies['baseline'], "custom_step":0})
+        wandb.log({f"icl_accuracy/{task_name}": accuracies['icl'], "custom_step":0})
+        wandb.log({f"tv_accuracy/{task_name}": accuracies['tv'], "custom_step":0})
         for layer, accuracy in accuracies["tv_dev_by_layer"].items():
-            print(f"{layer}: {accuracy:.2f}, ", end="")
+            print(f"{layer}: {accuracy:.2f}")
+            # wandb.define_metric(f"tv_dev_accuracy_layer/{task_name}", step_metric="custom_step")
+            wandb.log({f"tv_dev_accuracy_layer/{task_name}": accuracy,"custom_step": layer}, commit=False)
+        
         print()
         print("Time:", time.time() - tic)
 
@@ -144,7 +169,7 @@ def main():
         # Calculate the experiment_id as the max experiment_id + 1
         experiment_id = get_new_experiment_id()
         for model_type, model_variant in MODELS_TO_EVALUATE:
-            run_main_experiment(model_type, model_variant, experiment_id=experiment_id)
+            run_main_experiment(model_type, model_variant, experiment_id=experiment_id,)
     else:
         if len(sys.argv) == 2:
             model_num = int(sys.argv[1])

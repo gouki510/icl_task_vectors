@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 from core.data.preparation.knowledge_data import prepare_knowledge_data
 from core.data.preparation.linguistic_data import prepare_linguistic_data
 from core.data.preparation.translation_data import prepare_translation_data
