@@ -97,13 +97,13 @@ def batch_forward(
 ) -> CausalLMOutputWithPast:
     batch_size = batch_size or _auto_batch_size(model, inputs)
     forward_kwargs = _get_forward_kwargs(forward_kwargs)
-
     batches = _get_batches(inputs, batch_size, show_progress=show_progress)
 
     device = model.device
     outputs = []
     for batch_inputs in batches:
         batch_inputs = nested_apply(batch_inputs, lambda t: t.to(device))
+        # print("batch_farward input:", batch_inputs)
         with torch.no_grad():
             out = model(**batch_inputs, **forward_kwargs)
             output_class = out.__class__
@@ -143,15 +143,12 @@ def batch_generate(
     generate_kwargs = _get_forward_kwargs(generate_kwargs)
     batches = _get_batches(inputs, batch_size, show_progress=show_progress)
     input_type = get_input_type(inputs)
-    # print("input_type", input_type)
-    # print("inputs[input_type]", inputs[input_type].shape)
-    # print("model", model)
 
     device = model.device
 
     generate_ids = []
     for batch_inputs in batches:
-        batch_inputs = nested_apply(batch_inputs, lambda t: t.to("cpu"))
+        batch_inputs = nested_apply(batch_inputs, lambda t: t.to(device))
 
         batch_ids = model.generate(
             **batch_inputs,
@@ -178,7 +175,6 @@ def get_attention(model : PreTrainedModel, tokenizer: PreTrainedTokenizer, input
     device = model.device
     batch_idx = 0
     batch_inputs = next(batches)
-    print(batch_inputs[input_type].shape)
     batch_inputs = nested_apply(batch_inputs, lambda t: t.to(device))
     with torch.no_grad():
         batch_ids = model.generate(

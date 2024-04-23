@@ -13,6 +13,7 @@ BASE_KWARGS = {
     "torch_dtype": torch.float16,
     "trust_remote_code": True,
     "output_attentions": True,
+    # "device_map": "auto",
 }
 
 GPU_KWARGS = {
@@ -100,14 +101,14 @@ def _create_device_map(model_path: str) -> dict[str, int]:
     return device_map
 
 
-def load_model(model_type: str, model_variant: str, load_to_cpu: bool = False):
+def load_model(model_type: str, model_variant: str, load_to_cpu: bool = False, device="cuda:0"):
     model_path = get_model_path(model_type, model_variant)
 
     kwargs = CPU_KWARGS if load_to_cpu else GPU_KWARGS
 
-    kwargs["device_map"] = _create_device_map(model_path)
+    # kwargs["device_map"] = _create_device_map(model_path)
 
-    model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs)
+    model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs).to(device)
     model = model.eval()  # check if this is necessary
 
     return model
@@ -123,10 +124,10 @@ def load_tokenizer(model_type: str, model_variant: str) -> PreTrainedTokenizer:
 
 
 def load_model_and_tokenizer(
-    model_type: str, model_variant: str, load_to_cpu: bool = False
+    model_type: str, model_variant: str, load_to_cpu: bool = False, device="cuda:0"
 ) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
     tokenizer = load_tokenizer(model_type, model_variant)
-    model = load_model(model_type, model_variant, load_to_cpu=load_to_cpu)
+    model = load_model(model_type, model_variant, load_to_cpu=load_to_cpu, device=device)
 
     return model, tokenizer
 
@@ -138,10 +139,16 @@ MODEL_PATHS = {
         "6.9B": "EleutherAI/pythia-6.9b",
         "12B": "EleutherAI/pythia-12b",
     },
-    "llama": {
+    "llama2": {
         "7B": "meta-llama/Llama-2-7b-hf", #llama_local_path("huggingface", "7B"),
-        "13B":  "meta-llama/Llama-2-13b-hf", #llama_local_path("huggingface", "13B"),#"30B":  "meta-llama/Llama-2-7b-hf" #llama_local_path("huggingface", "30B"),
+        "13B":  "meta-llama/Llama-2-13b-hf", #llama_local_path("huggingface", "13B"),
+        #"30B":  "meta-llama/Llama-2-7b-hf" #llama_local_path("huggingface", "30B"),
         "70B":  "meta-llama/Llama-2-70b-hf", #llama_local_path("huggingface", "65B"),
+    },
+    "llama3" : {
+        "8B": "meta-llama/Meta-Llama-3-8B",
+        "13B": "meta-llama/Llama-3-13b",
+        "70B": "meta-llama/Meta-Llama-3-70B",
     },
     "falcon": {
         "7B": "tiiuae/falcon-7b",

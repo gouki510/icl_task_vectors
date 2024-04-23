@@ -42,6 +42,7 @@ def run_icl(
         input_querys = inputs["input_ids"][:, -2]
         print(decode_predictions(inputs["input_ids"][0], tokenizer))
         print(decode_predictions(input_querys, tokenizer)[0])
+        print(torch.where(inputs["input_ids"] == input_querys.unsqueeze(1))[1])
     # print(new_ids.shape)
     
     attention_html = model_view(attentions, generated_tokens, html_action='return')
@@ -237,6 +238,7 @@ def modulated_forward(
 
     if past_key_values is not None:
         inputs[get_input_type(inputs)] = inputs[get_input_type(inputs)][:, -1].unsqueeze(1)
+        # print(inputs[get_input_type(inputs)])
 
     first_forward_outputs = modified_forward(
         model,
@@ -268,9 +270,11 @@ def task_vector_accuracy_by_layer(
     inputs = tokenize_datasets(tokenizer, datasets, format_dataset_kwargs={"include_train": False})
     outputs = batch_forward(model, inputs=inputs, forward_kwargs={"use_cache": True})
     past_key_values = outputs.past_key_values
-    past_key_values = nested_apply(past_key_values, lambda x: x[:, :, :-1])  # remove last token from past_key_values
+    device = model.device
+    # print(len(past_key_values))
+    # print(past_key_values[0][0].device)
+    past_key_values = nested_apply(past_key_values, lambda x: x[:, :, :-1].to(device))  # remove last token from past_key_values
     inputs["input_ids"] = inputs["input_ids"][:, -1].unsqueeze(1)
-
     # Find best intermediate layer using dev set
     accuracies = []
     for layer_num in layers_to_test:

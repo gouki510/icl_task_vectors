@@ -57,6 +57,10 @@ def evaluate_task(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, task_n
     print(test_datasets[0].test_output)
     print("-"*10, "test_datasets", "-"*10)
     dev_datasets = task.create_datasets(num_datasets=num_dev_datasets, num_examples=num_examples)
+    print("-"*10, "dev_datasets", "-"*10)
+    print(dev_datasets[0].train_inputs)
+    print(dev_datasets[0].train_outputs)
+    print("-"*10, "dev_datasets", "-"*10)
     if "copying" in task_name:
         icl_predictions, attention_html = run_icl(model, tokenizer, task, test_datasets, copy_task=True)
     else:
@@ -110,14 +114,21 @@ def run_main_experiment(
     limit_gpus(range(0, 8))
 
     print("Loading model and tokenizer...")
+    device= "cuda:1"
     if model is None or tokenizer is None:
-        model, tokenizer = load_model_and_tokenizer(model_type, model_variant)
-    print("Loaded model and tokenizer.")
+        model, tokenizer = load_model_and_tokenizer(model_type, model_variant, device)
+    model.tie_weights()
+    print("Loaded model and tokenizer. dveice:", model.device)
 
     tasks = get_all_tasks(tokenizer=tokenizer)
-
     num_examples = 5
-    wandb.init(project="task-vector", config={"num_examples": num_examples})
+    wandb_config = {
+        "model_type": model_type,
+        "model_variant": model_variant,
+        "tasks": list(tasks.keys()),
+        "num_examples": num_examples,
+    }
+    wandb.init(project="task-vector-copying", config={"num_examples": num_examples})
     wandb.define_metric("custom_step")
     for i, task_name in enumerate(TASKS_TO_EVALUATE):
         task = tasks[task_name]
