@@ -139,10 +139,9 @@ MODEL_PATHS = {
         "12B": "EleutherAI/pythia-12b",
     },
     "llama": {
-        "7B": llama_local_path("huggingface", "7B"),
-        "13B": llama_local_path("huggingface", "13B"),
-        "30B": llama_local_path("huggingface", "30B"),
-        "65B": llama_local_path("huggingface", "65B"),
+        "7B": "meta-llama/Llama-2-7b-hf", #llama_local_path("huggingface", "7B"),
+        "13B":  "meta-llama/Llama-2-13b-hf", #llama_local_path("huggingface", "13B"),#"30B":  "meta-llama/Llama-2-7b-hf" #llama_local_path("huggingface", "30B"),
+        "70B":  "meta-llama/Llama-2-70b-hf", #llama_local_path("huggingface", "65B"),
     },
     "falcon": {
         "7B": "tiiuae/falcon-7b",

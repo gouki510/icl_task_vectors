@@ -30,6 +30,7 @@ def run_icl(
     task: Task,
     test_datasets: List[FewShotDataset],
     include_train: bool = True,
+    copy_task = False,
 ) -> List[str]:
     format_dataset_kwargs = {"include_train": include_train}
     inputs = tokenize_datasets(tokenizer, test_datasets, format_dataset_kwargs=format_dataset_kwargs)
@@ -37,7 +38,12 @@ def run_icl(
     attentions, generated_ids = get_attention(model, tokenizer, inputs=inputs, generate_kwargs={"max_new_tokens": 1})
     predictions = decode_predictions(new_ids, tokenizer)
     generated_tokens = decode_predictions(generated_ids, tokenizer)
+    if copy_task:
+        input_querys = inputs["input_ids"][:, -2]
+        print(decode_predictions(inputs["input_ids"][0], tokenizer))
+        print(decode_predictions(input_querys, tokenizer)[0])
     # print(new_ids.shape)
+    
     attention_html = model_view(attentions, generated_tokens, html_action='return')
     return predictions, attention_html
 

@@ -57,7 +57,10 @@ def evaluate_task(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, task_n
     print(test_datasets[0].test_output)
     print("-"*10, "test_datasets", "-"*10)
     dev_datasets = task.create_datasets(num_datasets=num_dev_datasets, num_examples=num_examples)
-    icl_predictions, attention_html = run_icl(model, tokenizer, task, test_datasets)
+    if "copying" in task_name:
+        icl_predictions, attention_html = run_icl(model, tokenizer, task, test_datasets, copy_task=True)
+    else:
+        icl_predictions, attention_html = run_icl(model, tokenizer, task, test_datasets)
     # model view
     # html = attention_html.data
     # with open(f'{task_name}-attention_html.html', 'w') as f:
@@ -133,13 +136,13 @@ def run_main_experiment(
         print(f"ICL Accuracy: {accuracies['icl']:.2f}")
         print(f"Task Vector Accuracy: {accuracies['tv']:.2f}")
         print(f"Dev Accuracy by layer: ", end="")
-        wandb.log({f"baseline_accuracy/{task_name}": accuracies['baseline'], "custom_step":0})
-        wandb.log({f"icl_accuracy/{task_name}": accuracies['icl'], "custom_step":0})
-        wandb.log({f"tv_accuracy/{task_name}": accuracies['tv'], "custom_step":0})
+        wandb.log({f"baseline_accuracy/{task_name}": accuracies['baseline'], })
+        wandb.log({f"icl_accuracy/{task_name}": accuracies['icl'], })
+        wandb.log({f"tv_accuracy/{task_name}": accuracies['tv'], })
+        wandb.define_metric(f"tv_dev_accuracy_layer/{task_name}", step_metric="custom_step")
         for layer, accuracy in accuracies["tv_dev_by_layer"].items():
             print(f"{layer}: {accuracy:.2f}")
-            # wandb.define_metric(f"tv_dev_accuracy_layer/{task_name}", step_metric="custom_step")
-            wandb.log({f"tv_dev_accuracy_layer/{task_name}": accuracy,"custom_step": layer}, commit=False)
+            wandb.log({f"tv_dev_accuracy_layer/{task_name}": accuracy,"custom_step": layer})
         
         print()
         print("Time:", time.time() - tic)
