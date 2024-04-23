@@ -114,7 +114,7 @@ def run_main_experiment(
     limit_gpus(range(0, 8))
 
     print("Loading model and tokenizer...")
-    device= "cuda:1"
+    device= "cuda:2"
     if model is None or tokenizer is None:
         model, tokenizer = load_model_and_tokenizer(model_type, model_variant, device)
     model.tie_weights()

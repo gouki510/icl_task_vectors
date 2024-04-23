@@ -28,13 +28,13 @@ TASKS_TO_EVALUATE = [
 MODELS_TO_EVALUATE = [
     # ("gpt-2", "1.5B"),
     # ("pythia", "2.8B"),
-    # ("llama2", "7B"),
+    ("llama2", "7B"),
     # ("gpt-j", "6B"),
     # ("pythia", "6.9B"),
-    ("llama2", "13B"),
+    # ("llama2", "13B"),
     # ("pythia", "12B"),
-    # ("llama2", "30B"),
-    ("llama3", "8B"),
+    # ("llama2", "70B"),
+    # ("llama3", "8B"),
     # ("llama3", "13B"),
     # ("llama3", "70B"),
     # ("mpt", "7B"), # error in ForwardTracer
